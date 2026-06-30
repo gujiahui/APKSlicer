@@ -1,7 +1,7 @@
 server:
   port: 8080
-#  servlet:
-#    context-path: /APKSlicer
+ servlet:
+   context-path: /
 
 spring:
   application:
@@ -32,10 +32,8 @@ channels:
     - channel_360
     - channel_default
     - channel_sg
-    - channel_baidu2
-    - channel_b
+    - channel_back
   options:
-    - channel_sg2
     - channel_sms
     - channel_test
     - channel_test2

@@ -981,11 +981,11 @@
 </div>
 
 <script>
-    let defaultSelectedChannels = ['channel_baidu', 'channel_baidu2', 'channel_b', 'channel_360', 'channel_default', 'channel_sg'];
+    let defaultSelectedChannels = ['3_uc_baidu', '3_uc_baidu2', '3_uc_b', '3_uc_360', '3_uc_1', '3_uc_sg'];
     let defaultOptionalChannels = [];
     let defaultLevels = ['_01', '_02', '_03', '_04', '_05'];
-    let cdnDomain = '';
-    let cdnPath = '/path';
+    let cdnDomain = 'https://cdn4.9conn.net';
+    let cdnPath = '/tui';
 
     async function loadConfig() {
         try {
@@ -1806,8 +1806,33 @@
             <span>成功: ${successCount}</span>
             <span>失败: ${rows.length - successCount}</span>
             <span>耗时: ${duration}秒</span>
+            <button id="copyAllBtn" class="copy-btn" style="float: right; margin-left: 10px;" onclick="copyAllLinks()">复制所有链接</button>
         `;
         stats.style.display = 'block';
+    }
+
+    function copyAllLinks() {
+        const links = Array.from(document.querySelectorAll('.download-url'))
+            .map(link => link.href)
+            .filter(url => url && url.trim() !== '');
+
+        if (links.length === 0) {
+            showToast('没有可复制的链接', 'warning');
+            return;
+        }
+
+        const text = links.join('\n');
+        const button = document.getElementById('copyAllBtn');
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopySuccess(button);
+            }).catch(() => {
+                fallbackCopy(text, button);
+            });
+        } else {
+            fallbackCopy(text, button);
+        }
     }
 
     async function startPollingFallback(taskId, progressBar, progressText, downloadStatus, onComplete) {
