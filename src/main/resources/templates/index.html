@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APK分包工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-upload {
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .file-upload.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .file-upload i {
+            font-size: 40px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        #fileInput, #checkFileInput {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .channel-section {
+            margin-bottom: 20px;
+        }
+
+        .channel-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .channel-tag {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .channel-tag.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .channel-tag:hover {
+            background: #e0e0e0;
+        }
+
+        .channel-tag.selected:hover {
+            background: #5a6fd6;
+        }
+
+        .level-tag {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-tag.selected {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .level-tag:hover {
+            background: #e9ecef;
+        }
+
+        .level-tag.selected:hover {
+            background: #218838;
+        }
+
+        .custom-channel {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .custom-channel input {
+            flex: 1;
+        }
+
+        .custom-channel button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .custom-channel button:hover {
+            background: #5a6fd6;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast 鏍峰紡 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.warning {
+            background: rgba(255, 193, 7, 0.9);
+            color: #333;
+        }
+
+        .toast.error {
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+        }
+
+        .toast.success {
+            background: rgba(40, 167, 69, 0.9);
+            color: white;
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.success {
+            border-left: 5px solid #28a745;
+        }
+
+        .result.error {
+            border-left: 5px solid #dc3545;
+        }
+
+        .result h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .channel-result {
+            padding: 15px;
+            margin-bottom: 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .channel-result.success {
+            border-left: 4px solid #28a745;
+        }
+
+        .channel-result.error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .channel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .channel-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .download-url-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .download-url {
+            flex: 1;
+            font-size: 13px;
+            color: #667eea;
+            word-break: break-all;
+            text-decoration: none;
+        }
+
+        .download-url:hover {
+            text-decoration: underline;
+        }
+
+        .copy-btn {
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #5a6fd6;
+        }
+
+        .copy-btn.copied {
+            background: #28a745;
+        }
+
+        .error-msg {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .check-result {
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #28a745;
+        }
+
+        .check-result.error {
+            background: #ffebee;
+            border-left-color: #dc3545;
+        }
+
+        .check-result .result-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .check-result .channel-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #28a745;
+            word-break: break-all;
+        }
+
+        .check-result.error .channel-value {
+            color: #dc3545;
+        }
+
+        .stats {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stats span {
+            margin-right: 20px;
+        }
+
+        .apk-info {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 12px;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 150px;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            color: #333;
+            word-break: break-all;
+        }
+
+        .info-value.success-text {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .info-value.error-text {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .info-value.channel-code {
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 20px;
+            }
+
+            .custom-channel {
+                flex-direction: column;
+            }
+
+            .download-url-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .copy-btn {
+                align-self: flex-end;
+            }
+        }
+
+        .settings-btn {
+            padding: 10px 18px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+            align-self: center;
+            white-space: nowrap;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .settings-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-overlay.show {
+            display: flex;
+        }
+
+        .settings-modal {
+            background: white;
+            border-radius: 15px;
+            width: 480px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .settings-header h2 {
+            font-size: 18px;
+            color: #333;
+            margin: 0;
+        }
+
+        .settings-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .settings-close:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .settings-body {
+            padding: 25px;
+        }
+
+        .settings-group {
+            margin-bottom: 24px;
+        }
+
+        .settings-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .settings-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-label {
+            font-size: 14px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .settings-label small {
+            display: block;
+            font-size: 12px;
+            color: #999;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ccc;
+            border-radius: 26px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: #667eea;
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        .settings-input {
+            width: 100px;
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+
+        .settings-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .settings-input:disabled {
+            background: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .settings-input.error {
+            border-color: #dc3545;
+        }
+
+        .settings-input-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .settings-input-group span {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .settings-error {
+            font-size: 12px;
+            color: #dc3545;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .settings-error.show {
+            display: block;
+        }
+
+        .settings-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 20px 25px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .settings-footer button {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-save:hover {
+            opacity: 0.9;
+        }
+
+        .btn-save:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="tabs">
+        <div class="tab active" data-tab="slice">APK分包</div>
+        <div class="tab" data-tab="check">APK信息检测</div>
+        <button class="settings-btn" onclick="openSettings()">&#9881; 设置</button>
+    </div>
+
+    <div class="card">
+        <!-- 分包页面 -->
+        <div id="slice-panel">
+            <h1>APK分包工具</h1>
+
+            <div class="input-group">
+                <label>CDN链接</label>
+                <input type="url" id="cdnUrl" placeholder="请输入APK文件的CDN链接">
+            </div>
+
+            <div class="input-group">
+                <label>或上传APK文件</label>
+                <div class="file-upload" id="fileUpload">
+                    <i>📁</i>
+                    <p>点击或拖拽上传APK文件</p>
+                    <p style="font-size: 12px; color: #999;">支持 .apk 格式，最大5GB</p>
+                    <input type="file" id="fileInput" accept=".apk">
+                </div>
+                <div id="sliceFileInfo" class="file-info" style="display: none;"></div>
+            </div>
+
+            <div class="input-group">
+                <label>自定义文件名前缀 (如: ezfy2_v1.0.50_20260417)</label>
+                <input type="text" id="filePrefix" placeholder="输入文件名前缀，不填使用默认格式">
+                <p style="font-size: 12px; color: #999; margin-top: 5px;">生成的文件名格式: 前缀_渠道号.apk</p>
+            </div>
+
+            <div class="channel-section">
+                <label>选择渠道号</label>
+                <div class="channel-tags" id="channelTags">
+                    <!-- 渠道号将从后端动态加载 -->
+                </div>
+                <div class="custom-channel">
+                    <input type="text" id="customChannel" placeholder="自定义渠道号，多个用逗号分隔">
+                    <button onclick="addCustomChannel()">添加</button>
+                </div>
+            </div>
+
+            <div class="channel-section">
+                <label>选择层级后缀 (可选)</label>
+                <p style="font-size: 12px; color: #999; margin-bottom: 10px;">选择层级后会自动包含之前的所有层级，例如选择_03会生成_01、_02、_03三个分包</p>
+                <div class="channel-tags" id="levelTags">
+                    <!-- 层级后缀将从后端动态加载 -->
+                </div>
+            </div>
+
+            <button class="btn-submit" id="submitSlice">开始分包</button>
+
+            <!-- 进度显示区域 -->
+            <div id="progressSection" style="display: none; margin-top: 20px;">
+                <div style="background: #f8f9fa; border-radius: 10px; padding: 20px;">
+                    <h3 style="margin-bottom: 15px; color: #333;">📊 处理进度</h3>
+
+                    <div id="downloadStatus" style="margin-bottom: 15px; font-size: 13px; color: #666; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #e9ecef;"></div>
+
+                    <div class="progress-bar" style="background: #e9ecef; border-radius: 10px; height: 30px; overflow: hidden; margin-bottom: 10px;">
+                        <div id="progressBar" class="progress-fill" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div id="progressText" style="text-align: center; color: #666; font-size: 14px;">准备中...</div>
+
+                    <div id="channelProgressContainer" style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
+                        <h4 style="margin-bottom: 10px; color: #444;">📦 各渠道进度</h4>
+                        <div id="channelProgressList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>正在处理中，请稍候...</p>
+                <p style="font-size: 12px; color: #999;">大文件可能需要较长时间</p>
+            </div>
+
+            <div class="result" id="sliceResult">
+                <h3>处理结果</h3>
+                <div id="channelResults"></div>
+                <div class="stats" id="sliceStats" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- 检测页面 -->
+        <div id="check-panel" style="display: none;">
+            <h1>APK信息检测</h1>
+
+            <div class="input-group">
+                <label>CDN链接</label>
+                <input type="url" id="checkCdnUrl" placeholder="请输入APK文件的CDN链接">
+            </div>
+
+            <div class="input-group">
+                <label>或上传APK文件</label>
+                <div class="file-upload" id="checkFileUpload">
+                    <i>📁</i>
+                    <p>点击或拖拽上传APK文件</p>
+                    <p style="font-size: 12px; color: #999;">支持 .apk 格式，最大5GB</p>
+                    <input type="file" id="checkFileInput" accept=".apk">
+                </div>
+                <div id="checkFileInfo" class="file-info" style="display: none;"></div>
+            </div>
+
+            <button class="btn-submit" id="submitCheck">开始检测</button>
+
+            <div class="loading" id="checkLoading">
+                <div class="loading-spinner"></div>
+                <p>正在检测中，请稍候...</p>
+            </div>
+
+            <div class="result" id="checkResult">
+                <h3>检测结果</h3>
+                <div id="checkResultContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="settings-overlay" id="settingsOverlay">
+    <div class="settings-modal">
+        <div class="settings-header">
+            <h2>系统设置</h2>
+            <button class="settings-close" onclick="closeSettings()">&#10005;</button>
+        </div>
+        <div class="settings-body">
+            <div class="settings-group">
+                <div class="settings-group-title">断点上传</div>
+                <div class="settings-row">
+                    <span class="settings-label">启用断点上传<small>大文件上传支持断点续传</small></span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="breakpointUploadEnabled" onchange="toggleUploadSettings()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">文件阈值 (MB)<small>超过此大小启用断点上传</small></span>
+                    <div class="settings-input-group">
+                        <input type="number" class="settings-input" id="breakpointUploadThreshold" value="100" min="1" max="10240">
+                        <span>MB</span>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">最大任务数<small>同时上传的最大任务数</small></span>
+                    <input type="number" class="settings-input" id="breakpointUploadMaxTasks" value="1" min="1" max="10">
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">断点下载</div>
+                <div class="settings-row">
+                    <span class="settings-label">启用断点下载<small>大文件下载支持断点续传</small></span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="breakpointDownloadEnabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">文件阈值 (MB)<small>超过此大小启用断点下载</small></span>
+                    <div class="settings-input-group">
+                        <input type="number" class="settings-input" id="breakpointDownloadThreshold" value="100" min="1" max="10240">
+                        <span>MB</span>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">最大任务数<small>同时下载的最大任务数</small></span>
+                    <input type="number" class="settings-input" id="breakpointDownloadMaxTasks" value="1" min="1" max="10">
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group-title">其他</div>
+                <div class="settings-row">
+                    <span class="settings-label">CDN文件覆盖<small>开启后允许覆盖CDN上已存在的文件</small></span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="overwriteEnabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="settings-row">
+                    <span class="settings-label">调试日志<small>开启后输出详细调试信息</small></span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="debugLogEnabled">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="settings-footer">
+            <button class="btn-cancel" onclick="closeSettings()">取消</button>
+            <button class="btn-save" onclick="saveSettings()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let defaultSelectedChannels = ['channel_baidu', 'channel_baidu2', 'channel_b', 'channel_360', 'channel_default', 'channel_sg'];
+    let defaultOptionalChannels = [];
+    let defaultLevels = ['_01', '_02', '_03', '_04', '_05'];
+    let cdnDomain = '';
+    let cdnPath = '/path';
+
+    async function loadConfig() {
+        try {
+            const response = await fetch('/api/channels');
+            const data = await response.json();
+            if (data.resultCode === '0') {
+                if (data.selectedChannels && data.selectedChannels.length > 0) {
+                    defaultSelectedChannels = data.selectedChannels;
+                }
+                if (data.optionalChannels && data.optionalChannels.length > 0) {
+                    defaultOptionalChannels = data.optionalChannels;
+                }
+                if (data.levels && data.levels.length > 0) {
+                    defaultLevels = data.levels;
+                }
+                if (data.cdnDomain) {
+                    cdnDomain = data.cdnDomain;
+                }
+                if (data.cdnPath) {
+                    cdnPath = data.cdnPath;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load config:', error);
+        } finally {
+            // 无论是否成功加载后台配置，都渲染标签
+            renderChannelTags();
+            renderLevelTags();
+        }
+    }
+
+    function renderChannelTags() {
+        const tagsContainer = document.getElementById('channelTags');
+        tagsContainer.innerHTML = '';
+
+        // 先渲染默认选中的渠道号
+        defaultSelectedChannels.forEach(channel => {
+            const tag = document.createElement('span');
+            tag.className = 'channel-tag selected';
+            tag.dataset.channel = channel;
+            tag.textContent = channel;
+            tag.addEventListener('click', toggleChannel);
+            tagsContainer.appendChild(tag);
+        });
+
+        // 再渲染可选但不默认选中的渠道号
+        defaultOptionalChannels.forEach(channel => {
+            const tag = document.createElement('span');
+            tag.className = 'channel-tag';
+            tag.dataset.channel = channel;
+            tag.textContent = channel;
+            tag.addEventListener('click', toggleChannel);
+            tagsContainer.appendChild(tag);
+        });
+    }
+
+    function renderLevelTags() {
+        const tagsContainer = document.getElementById('levelTags');
+        if (!tagsContainer) return;
+
+        tagsContainer.innerHTML = '';
+
+        if (defaultLevels.length === 0) {
+            tagsContainer.innerHTML = '<span style="color: #999; font-size: 14px;">暂无可用层级配置</span>';
+            return;
+        }
+
+        defaultLevels.forEach(level => {
+            const tag = document.createElement('span');
+            tag.className = 'level-tag';
+            tag.dataset.level = level;
+            tag.textContent = level;
+            tag.addEventListener('click', toggleLevel);
+            tagsContainer.appendChild(tag);
+        });
+    }
+
+    function toggleLevel(e) {
+        const allLevelTags = document.querySelectorAll('.level-tag');
+        const clickedTag = e.target;
+
+        // 如果点击的是已选中的标签，则取消选择
+        if (clickedTag.classList.contains('selected')) {
+            clickedTag.classList.remove('selected');
+        } else {
+            // 取消其他层级的选择
+            allLevelTags.forEach(tag => tag.classList.remove('selected'));
+            // 选中当前层级
+            clickedTag.classList.add('selected');
+        }
+    }
+
+    function getSelectedLevels() {
+        return Array.from(document.querySelectorAll('.level-tag.selected'))
+            .map(tag => tag.dataset.level);
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const targetTab = tab.dataset.tab;
+            document.getElementById('slice-panel').style.display = targetTab === 'slice' ? 'block' : 'none';
+            document.getElementById('check-panel').style.display = targetTab === 'check' ? 'block' : 'none';
+        });
+    });
+
+    function setupFileUpload(uploadId, inputId, infoId) {
+        const upload = document.getElementById(uploadId);
+        const input = document.getElementById(inputId);
+        const info = document.getElementById(infoId);
+
+        upload.addEventListener('click', () => input.click());
+
+        upload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            upload.classList.add('dragover');
+        });
+
+        upload.addEventListener('dragleave', () => upload.classList.remove('dragover'));
+
+        upload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            upload.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                input.files = files;
+                updateFileInfo(files[0], info);
+            }
+        });
+
+        input.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateFileInfo(e.target.files[0], info);
+            }
+        });
+    }
+
+    function updateFileInfo(file, infoElement) {
+        infoElement.textContent = `文件名: ${file.name} | 大小: ${formatFileSize(file.size)}`;
+        infoElement.style.display = 'block';
+
+        // 根据当前活动页面清空对应的CDN链接
+        if (infoElement.id === 'sliceFileInfo') {
+            document.getElementById('cdnUrl').value = '';
+        } else if (infoElement.id === 'checkFileInfo') {
+            document.getElementById('checkCdnUrl').value = '';
+        }
+    }
+
+    setupFileUpload('fileUpload', 'fileInput', 'sliceFileInfo');
+    setupFileUpload('checkFileUpload', 'checkFileInput', 'checkFileInfo');
+
+    document.getElementById('cdnUrl').addEventListener('input', () => {
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('sliceFileInfo');
+        if (fileInput.files.length > 0) {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+        }
+    });
+
+    document.getElementById('checkCdnUrl').addEventListener('input', () => {
+        const fileInput = document.getElementById('checkFileInput');
+        const fileInfo = document.getElementById('checkFileInfo');
+        if (fileInput.files.length > 0) {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+        }
+    });
+
+    async function openSettings() {
+        const overlay = document.getElementById('settingsOverlay');
+        overlay.classList.add('show');
+        try {
+            const response = await fetch('/api/settings');
+            const data = await response.json();
+            if (data.resultCode === '0' && data.settings) {
+                const s = data.settings;
+                document.getElementById('breakpointUploadEnabled').checked = s.breakpointUploadEnabled || false;
+                document.getElementById('breakpointUploadThreshold').value = s.breakpointUploadThreshold || 100;
+                document.getElementById('breakpointUploadMaxTasks').value = s.breakpointUploadMaxTasks || 1;
+                document.getElementById('breakpointDownloadEnabled').checked = s.breakpointDownloadEnabled || false;
+                document.getElementById('breakpointDownloadThreshold').value = s.breakpointDownloadThreshold || 100;
+                document.getElementById('breakpointDownloadMaxTasks').value = s.breakpointDownloadMaxTasks || 1;
+                document.getElementById('debugLogEnabled').checked = s.debugLogEnabled || false;
+                document.getElementById('overwriteEnabled').checked = s.overwriteEnabled || false;
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        }
+        toggleUploadSettings();
+        toggleDownloadSettings();
+    }
+
+    function closeSettings() {
+        const overlay = document.getElementById('settingsOverlay');
+        overlay.classList.remove('show');
+    }
+
+    function toggleUploadSettings() {
+    }
+
+    function toggleDownloadSettings() {
+    }
+
+    async function saveSettings() {
+        const settings = {
+            breakpointUploadEnabled: document.getElementById('breakpointUploadEnabled').checked,
+            breakpointUploadThreshold: parseInt(document.getElementById('breakpointUploadThreshold').value) || 100,
+            breakpointUploadMaxTasks: parseInt(document.getElementById('breakpointUploadMaxTasks').value) || 1,
+            breakpointDownloadEnabled: document.getElementById('breakpointDownloadEnabled').checked,
+            breakpointDownloadThreshold: parseInt(document.getElementById('breakpointDownloadThreshold').value) || 100,
+            breakpointDownloadMaxTasks: parseInt(document.getElementById('breakpointDownloadMaxTasks').value) || 1,
+            debugLogEnabled: document.getElementById('debugLogEnabled').checked,
+            overwriteEnabled: document.getElementById('overwriteEnabled').checked
+        };
+
+        document.querySelectorAll('.settings-input').forEach(el => el.classList.remove('error'));
+
+        if (settings.breakpointUploadEnabled) {
+            if (settings.breakpointUploadThreshold < 1 || settings.breakpointUploadThreshold > 10240) {
+                document.getElementById('breakpointUploadThreshold').classList.add('error');
+                showToast('断点上传文件阈值必须在1到10240之间', 'error');
+                return;
+            }
+            if (settings.breakpointUploadMaxTasks < 1 || settings.breakpointUploadMaxTasks > 10) {
+                document.getElementById('breakpointUploadMaxTasks').classList.add('error');
+                showToast('断点上传最大任务数必须在1到10之间', 'error');
+                return;
+            }
+        }
+
+        if (settings.breakpointDownloadEnabled) {
+            if (settings.breakpointDownloadThreshold < 1 || settings.breakpointDownloadThreshold > 10240) {
+                document.getElementById('breakpointDownloadThreshold').classList.add('error');
+                showToast('断点下载文件阈值必须在1到10240之间', 'error');
+                return;
+            }
+            if (settings.breakpointDownloadMaxTasks < 1 || settings.breakpointDownloadMaxTasks > 10) {
+                document.getElementById('breakpointDownloadMaxTasks').classList.add('error');
+                showToast('断点下载最大任务数必须在1到10之间', 'error');
+                return;
+            }
+        }
+
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+            const data = await response.json();
+            if (data.resultCode === '0') {
+                showToast('设置已保存', 'success');
+                closeSettings();
+            } else {
+                showToast(data.resultMsg || '保存失败', 'error');
+            }
+        } catch (error) {
+            showToast('保存失败: ' + error.message, 'error');
+        }
+    }
+
+    document.getElementById('settingsOverlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeSettings();
+        }
+    });
+
+    // Toast 提示函数
+    function showToast(message, type = 'info') {
+        const existingToast = document.querySelector('.toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10);
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 2500);
+    }
+
+    function addCustomChannel() {
+        const input = document.getElementById('customChannel');
+        const values = input.value.trim().split(',').map(v => v.trim()).filter(v => v);
+
+        if (values.length === 0) return;
+
+        const tags = document.getElementById('channelTags');
+        values.forEach(value => {
+            if (!document.querySelector(`[data-channel="${value}"]`)) {
+                const tag = document.createElement('span');
+                tag.className = 'channel-tag selected';
+                tag.dataset.channel = value;
+                tag.textContent = value;
+                tag.onclick = toggleChannel;
+                tags.appendChild(tag);
+            }
+        });
+
+        input.value = '';
+    }
+
+    function toggleChannel(e) {
+        e.target.classList.toggle('selected');
+    }
+
+    document.querySelectorAll('.channel-tag').forEach(tag => {
+        tag.addEventListener('click', toggleChannel);
+    });
+
+    function getSelectedChannels() {
+        return Array.from(document.querySelectorAll('.channel-tag.selected'))
+            .map(tag => tag.dataset.channel);
+    }
+
+    function copyToClipboard(text, button) {
+        if (!text || text.trim() === '') {
+            showToast('没有可复制的内容', 'warning');
+            return;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopySuccess(button);
+            }).catch(() => {
+                // 降级到execCommand方法
+                fallbackCopy(text, button);
+            });
+        } else {
+            // 使用execCommand方法（旧浏览器）
+            fallbackCopy(text, button);
+        }
+    }
+
+    function fallbackCopy(text, button) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopySuccess(button);
+            } else {
+                alert('复制失败，请手动复制');
+            }
+        } catch (err) {
+            alert('复制失败，请手动复制');
+        } finally {
+            document.body.removeChild(textarea);
+        }
+    }
+
+    function showCopySuccess(button) {
+        button.textContent = '已复制';
+        button.classList.add('copied');
+        setTimeout(() => {
+            button.textContent = '复制';
+            button.classList.remove('copied');
+        }, 2000);
+    }
+
+    let isProcessing = false;
+    const MIN_CLICK_INTERVAL = 1000;
+    let lastClickTime = 0;
+
+    function canClick() {
+        const now = Date.now();
+        if (now - lastClickTime < MIN_CLICK_INTERVAL) {
+            console.warn('[UI] 点击过快，被拦截, 距上次点击: ' + (now - lastClickTime) + 'ms');
+            return false;
+        }
+        if (isProcessing) {
+            console.warn('[UI] 正在处理中，点击被拦截, isProcessing=' + isProcessing);
+            return false;
+        }
+        return true;
+    }
+
+    function markClick() {
+        lastClickTime = Date.now();
+        isProcessing = true;
+        console.log('[UI] 标记为处理中, isProcessing=true');
+    }
+
+    function finishProcessing() {
+        if (isProcessing) {
+            isProcessing = false;
+            console.log('[UI] 处理完成, isProcessing=false');
+        }
+    }
+
+    function generateFileName(prefix, channelCode) {
+        if (!prefix || prefix.trim() === '') {
+            const now = new Date();
+            const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+            prefix = `app_v1.0.0_${dateStr}`;
+        }
+        return `${prefix}_${channelCode}.apk`;
+    }
+
+    function generateCdnUrl(fileName) {
+        return `${cdnDomain}${cdnPath}/${fileName}`;
+    }
+
+    async function submitSlice() {
+        if (!canClick()) {
+            showToast('操作过于频繁，请稍后再试', 'warning');
+            return;
+        }
+        markClick();
+
+        const submitBtn = document.getElementById('submitSlice');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '处理中...';
+        submitBtn.disabled = true;
+
+        const cdnUrl = document.getElementById('cdnUrl').value.trim();
+        const file = document.getElementById('fileInput').files[0];
+        const filePrefix = document.getElementById('filePrefix').value.trim();
+        const channels = getSelectedChannels();
+        const levels = getSelectedLevels();
+
+        // 验证：CDN链接和APK文件不能同时存在
+        if (cdnUrl && file) {
+            showToast('请只选择CDN链接或上传APK文件，不能同时提供', 'warning');
+            finishProcessing();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+
+        if (!cdnUrl && !file) {
+            showToast('请提供CDN链接或上传APK文件', 'warning');
+            finishProcessing();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+
+        if (channels.length === 0) {
+            showToast('请至少选择一个渠道号', 'warning');
+            finishProcessing();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+
+        // 验证：如果选择了层级，必须至少选择一个渠道号
+        if (levels.length > 0 && channels.length === 0) {
+            showToast('请先选择渠道号，再选择层级', 'warning');
+            finishProcessing();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+
+        // 验证：filePrefix不能为空
+        if (!filePrefix || filePrefix.trim() === '') {
+            showToast('请输入自定义文件名前缀，不能为空', 'warning');
+            finishProcessing();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('sliceResult');
+        const channelResults = document.getElementById('channelResults');
+        const stats = document.getElementById('sliceStats');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const downloadStatus = document.getElementById('downloadStatus');
+
+        loading.classList.add('show');
+        result.classList.remove('show');
+        stats.style.display = 'none';
+        progressSection.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressText.textContent = '正在提交任务...';
+        downloadStatus.textContent = '';
+
+        const formData = new FormData();
+        channels.forEach(ch => formData.append('channels', ch));
+        if (filePrefix) {
+            formData.append('filePrefix', filePrefix);
+        }
+        // 添加层级参数
+        if (levels.length > 0) {
+            levels.forEach(lv => formData.append('levels', lv));
+        }
+
+        if (cdnUrl) {
+            formData.append('cdnUrl', cdnUrl);
+        }
+        if (file) {
+            formData.append('file', file);
+        }
+
+        let taskId = null;
+
+        try {
+            const startTime = Date.now();
+            const response = await fetch('/api/slice', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            const startAt = startTime;
+
+            loading.classList.remove('show');
+
+            if (data.resultCode === '0' && data.taskId) {
+                taskId = data.taskId;
+                progressText.textContent = '任务已提交，正在处理...';
+                console.log('[Slice] 任务已提交: taskId=' + taskId);
+                queryProgress(taskId, channels, levels, progressBar, progressText, downloadStatus, function(progressData) {
+                    console.log('[Slice] onComplete回调触发: status=' + progressData.status);
+                    renderSliceResultFromProgress(progressData, startAt);
+                });
+            } else {
+                result.className = 'result show error';
+                channelResults.innerHTML = `<div class="error-msg">错误: ${data.resultMsg}</div>`;
+                progressText.textContent = '处理失败';
+                finishProcessing();
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            loading.classList.remove('show');
+            result.className = 'result show error';
+            channelResults.innerHTML = `<div class="error-msg">请求失败: ${error.message}</div>`;
+            progressText.textContent = '请求失败: ' + error.message;
+            finishProcessing();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+
+    let sseState = {
+        eventSource: null,
+        lastEventTime: 0,
+        heartbeatCheckInterval: null,
+        pollingInterval: null,
+        reconnectInterval: null,
+        downloadStatusInterval: null,
+        isPolling: false
+    };
+
+    function cleanupSseState() {
+        if (sseState.eventSource) {
+            sseState.eventSource.close();
+            sseState.eventSource = null;
+        }
+        if (sseState.heartbeatCheckInterval) {
+            clearInterval(sseState.heartbeatCheckInterval);
+            sseState.heartbeatCheckInterval = null;
+        }
+        if (sseState.pollingInterval) {
+            clearInterval(sseState.pollingInterval);
+            sseState.pollingInterval = null;
+        }
+        if (sseState.reconnectInterval) {
+            clearInterval(sseState.reconnectInterval);
+            sseState.reconnectInterval = null;
+        }
+        if (sseState.downloadStatusInterval) {
+            clearInterval(sseState.downloadStatusInterval);
+            sseState.downloadStatusInterval = null;
+        }
+        sseState.isPolling = false;
+    }
+
+    function queryProgress(taskId, channels, levels, progressBar, progressText, downloadStatus, onComplete) {
+        const channelProgressList = document.getElementById('channelProgressList');
+        console.log('[SSE] 开始查询进度: taskId=' + taskId + ', isProcessing=' + isProcessing);
+
+        const totalTasks = channels.length * (levels.length > 0 ? levels.length + 1 : 1);
+
+        channelProgressList.innerHTML = '<div style="text-align: center; color: #999; font-size: 14px; padding: 20px;">等待任务开始...</div>';
+
+        sseState.lastEventTime = Date.now();
+
+        sseState.downloadStatusInterval = setInterval(async () => {
+            try {
+                const response = await fetch('/api/download/status');
+                const data = await response.json();
+                if (data.resultCode === '0' && data.status) {
+                    downloadStatus.textContent = '📥 ' + data.status;
+                }
+            } catch (error) {
+                console.error('查询下载状态失败', error);
+            }
+        }, 2000);
+
+        sseState.heartbeatCheckInterval = setInterval(() => {
+            if (!sseState.isPolling && (Date.now() - sseState.lastEventTime > 30000)) {
+                console.warn('SSE心跳超时，30秒未收到事件，切换轮询模式');
+                downloadStatus.textContent = '⚠️ SSE超时，已切换为轮询模式';
+                if (sseState.eventSource) {
+                    sseState.eventSource.close();
+                    sseState.eventSource = null;
+                }
+                startPollingFallback(taskId, progressBar, progressText, downloadStatus, onComplete);
+            }
+        }, 5000);
+
+        connectSSE(taskId, progressBar, progressText, downloadStatus, onComplete, totalTasks);
+    }
+
+    function connectSSE(taskId, progressBar, progressText, downloadStatus, onComplete, totalTasks) {
+        console.log('[SSE] 建立SSE连接: taskId=' + taskId);
+        try {
+            const sseUrl = `/api/progress/sse?taskId=${taskId}`;
+            sseState.eventSource = new EventSource(sseUrl);
+            sseState.lastEventTime = Date.now();
+
+            sseState.eventSource.addEventListener('progress', function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    sseState.lastEventTime = Date.now();
+                    updateProgressDisplay(data, totalTasks, onComplete);
+                } catch (parseError) {
+                    console.error('解析SSE数据失败:', parseError);
+                }
+            });
+
+            sseState.eventSource.addEventListener('heartbeat', function(e) {
+                sseState.lastEventTime = Date.now();
+            });
+
+            sseState.eventSource.addEventListener('complete', function(e) {
+                console.log('[SSE] 收到complete事件');
+                cleanupSseState();
+            });
+
+            sseState.eventSource.addEventListener('error', function(e) {
+                console.error('[SSE] 连接错误: taskId=' + taskId, e);
+                if (sseState.eventSource) {
+                    sseState.eventSource.close();
+                    sseState.eventSource = null;
+                }
+                if (!sseState.isPolling) {
+                    downloadStatus.textContent = '⚠️ SSE连接中断，切换到轮询模式';
+                    startPollingFallback(taskId, progressBar, progressText, downloadStatus, onComplete);
+                }
+            });
+        } catch (error) {
+            console.error('创建SSE连接失败:', error);
+            downloadStatus.textContent = '⚠️ SSE不可用，已切换为轮询模式';
+            startPollingFallback(taskId, progressBar, progressText, downloadStatus, onComplete);
+        }
+    }
+
+    function updateProgressDisplay(data, totalTasks, onComplete) {
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const downloadStatus = document.getElementById('downloadStatus');
+        const channelProgressList = document.getElementById('channelProgressList');
+
+        const overallProgress = data.overallProgress || 0;
+        const statusText = getStatusText(data.status);
+
+        progressBar.style.width = `${overallProgress}%`;
+        progressText.textContent = `${statusText}: ${overallProgress}% (${data.successCount || 0} 成功, ${data.failedCount || 0} 失败)`;
+
+        if (data.downloadMessage) {
+            downloadStatus.textContent = data.downloadMessage;
+        }
+
+        // 动态生成进度条
+        if (data.channelProgressMap) {
+            // 第一次收到进度数据时，清除"等待任务开始"提示
+            if (channelProgressList.querySelector('div[style*="text-align: center"]')) {
+                channelProgressList.innerHTML = '';
+            }
+
+            for (const [channel, channelProgress] of Object.entries(data.channelProgressMap)) {
+                if (channelProgress.levelProgressMap) {
+                    for (const [level, levelProgress] of Object.entries(channelProgress.levelProgressMap)) {
+                        const fullChannel = channel + level;
+                        const safeName = fullChannel.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+                        // 检查进度条是否存在，不存在则创建
+                        let channelItem = document.getElementById(`channel-${safeName}`);
+                        if (!channelItem) {
+                            channelItem = document.createElement('div');
+                            channelItem.id = `channel-${safeName}`;
+                            channelItem.className = 'channel-progress-item';
+                            channelItem.style.cssText = 'margin-bottom: 10px; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #e9ecef;';
+                            channelItem.innerHTML = `
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 14px; font-weight: 500; color: #333;">${fullChannel}</span>
+                                    <span id="status-${safeName}" class="channel-status"
+                                          style="font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #e9ecef; color: #666;">
+                                        等待中
+                                    </span>
+                                </div>
+                                <div style="background: #f5f5f5; border-radius: 6px; height: 8px; overflow: hidden;">
+                                    <div id="bar-${safeName}"
+                                         style="height: 100%; width: 0%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.3s ease;"></div>
+                                </div>
+                                <div id="msg-${safeName}" style="font-size: 12px; color: #888; margin-top: 5px;"></div>
+                            `;
+                            channelProgressList.appendChild(channelItem);
+                        }
+
+                        const statusEl = document.getElementById(`status-${safeName}`);
+                        const barEl = document.getElementById(`bar-${safeName}`);
+                        const msgEl = document.getElementById(`msg-${safeName}`);
+
+                        if (statusEl && barEl && msgEl) {
+                            const status = levelProgress.status || 'processing';
+                            const itemProgress = typeof levelProgress.progress === 'number' ? levelProgress.progress : (status === 'success' || status === 'failed' ? 100 : 0);
+                            statusEl.textContent = getChannelStatusText(status);
+                            statusEl.style.background = status === 'success' ? '#d4edda' : (status === 'failed' ? '#f8d7da' : '#e9ecef');
+                            statusEl.style.color = status === 'success' ? '#155724' : (status === 'failed' ? '#721c24' : '#666');
+                            barEl.style.width = `${itemProgress}%`;
+                            barEl.style.background = status === 'success' ? '#28a745' : (status === 'failed' ? '#dc3545' : 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)');
+                            msgEl.textContent = levelProgress.message || '';
+                        }
+                    }
+                }
+            }
+        }
+
+        if (data.status === 'completed' || data.status === 'failed') {
+            console.log('[Progress] 任务终态: status=' + data.status + ', isProcessing=' + isProcessing);
+            cleanupSseState();
+            progressText.textContent = data.status === 'completed'
+                ? `处理完成: ${data.completeMessage || ''}`
+                : `处理失败: ${data.completeMessage || ''}`;
+            progressBar.style.width = '100%';
+            finishProcessing();
+            const submitBtn = document.getElementById('submitSlice');
+            if (submitBtn) {
+                submitBtn.textContent = '开始分包';
+                submitBtn.disabled = false;
+            }
+            if (typeof onComplete === 'function') {
+                onComplete(data);
+            }
+        }
+    }
+
+    function renderSliceResultFromProgress(data, startAt) {
+        const result = document.getElementById('sliceResult');
+        const channelResults = document.getElementById('channelResults');
+        const stats = document.getElementById('sliceStats');
+        const rows = [];
+
+        if (data.channelProgressMap) {
+            for (const [channel, channelProgress] of Object.entries(data.channelProgressMap)) {
+                if (channelProgress.levelProgressMap) {
+                    for (const [level, levelProgress] of Object.entries(channelProgress.levelProgressMap)) {
+                        rows.push({
+                            channelCode: channel + level,
+                            success: levelProgress.status === 'success',
+                            qiniuUrl: levelProgress.qiniuUrl || '',
+                            errorMessage: levelProgress.message || ''
+                        });
+                    }
+                }
+            }
+        }
+
+        result.className = `result show ${data.status === 'completed' ? 'success' : 'error'}`;
+        channelResults.innerHTML = rows.map(ch => {
+            const cdnLink = ch.qiniuUrl || '';
+            return `
+                <div class="channel-result ${ch.success ? 'success' : 'error'}">
+                    <div class="channel-header">
+                        <span class="channel-name">渠道号: ${ch.channelCode}</span>
+                        <span class="status-badge ${ch.success ? 'success' : 'error'}">${ch.success ? '成功' : '失败'}</span>
+                    </div>
+                    ${ch.success ? `
+                        <div class="download-url-container">
+                            <a href="${cdnLink}" target="_blank" class="download-url">${cdnLink}</a>
+                            <button class="copy-btn" onclick="copyToClipboard('${cdnLink}', this)">复制</button>
+                        </div>
+                    ` : `<div class="error-msg">失败原因: ${ch.errorMessage}</div>`}
+                </div>
+            `;
+        }).join('');
+
+        const successCount = rows.filter(ch => ch.success).length;
+        const duration = ((Date.now() - startAt) / 1000).toFixed(1);
+        stats.innerHTML = `
+            <span>总渠道数: ${rows.length}</span>
+            <span>成功: ${successCount}</span>
+            <span>失败: ${rows.length - successCount}</span>
+            <span>耗时: ${duration}秒</span>
+        `;
+        stats.style.display = 'block';
+    }
+
+    async function startPollingFallback(taskId, progressBar, progressText, downloadStatus, onComplete) {
+        sseState.isPolling = true;
+
+        if (sseState.pollingInterval) {
+            clearInterval(sseState.pollingInterval);
+        }
+
+        sseState.pollingInterval = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/progress?taskId=${taskId}`);
+                const data = await response.json();
+                if (data.resultCode === '0' && data.progress) {
+                    const progress = data.progress;
+                    progress.overallProgress = data.overallProgress || progress.overallProgress || 0;
+                    progress.successCount = data.successCount || 0;
+                    progress.failedCount = data.failedCount || 0;
+                    updateProgressDisplay(progress, 0, onComplete);
+                    if (progress.status === 'completed' || progress.status === 'failed') {
+                        cleanupSseState();
+                    }
+                }
+            } catch (error) {
+                console.error('轮询失败:', error);
+            }
+        }, 3000);
+
+        if (sseState.reconnectInterval) {
+            clearInterval(sseState.reconnectInterval);
+        }
+        sseState.reconnectInterval = setInterval(() => {
+            if (sseState.isPolling && !sseState.eventSource) {
+                try {
+                    const sseUrl = `/api/progress/sse?taskId=${taskId}`;
+                    const testSource = new EventSource(sseUrl);
+                    let reconnectSuccess = false;
+
+                    testSource.addEventListener('progress', function(e) {
+                        reconnectSuccess = true;
+                        sseState.isPolling = false;
+                        if (sseState.pollingInterval) {
+                            clearInterval(sseState.pollingInterval);
+                            sseState.pollingInterval = null;
+                        }
+                        if (sseState.reconnectInterval) {
+                            clearInterval(sseState.reconnectInterval);
+                            sseState.reconnectInterval = null;
+                        }
+                        sseState.eventSource = testSource;
+                        sseState.lastEventTime = Date.now();
+                        downloadStatus.textContent = 'SSE连接已恢复';
+
+                        testSource.addEventListener('progress', function(ev) {
+                            try {
+                                const data = JSON.parse(ev.data);
+                                sseState.lastEventTime = Date.now();
+                                updateProgressDisplay(data, 0, onComplete);
+                            } catch (parseError) {
+                                console.error('解析SSE数据失败:', parseError);
+                            }
+                        });
+
+                        testSource.addEventListener('heartbeat', function(ev) {
+                            sseState.lastEventTime = Date.now();
+                        });
+
+                        testSource.addEventListener('complete', function(ev) {
+                            console.log('[SSE-Reconnect] 收到complete事件');
+                            cleanupSseState();
+                        });
+
+                        testSource.addEventListener('error', function(ev) {
+                            if (sseState.eventSource) {
+                                sseState.eventSource.close();
+                                sseState.eventSource = null;
+                            }
+                            if (!sseState.isPolling) {
+                                downloadStatus.textContent = '⚠️ SSE连接中断，切换到轮询模式';
+                                startPollingFallback(taskId, progressBar, progressText, downloadStatus, onComplete);
+                            }
+                        });
+                    });
+
+                    testSource.addEventListener('error', function() {
+                        testSource.close();
+                    });
+
+                    setTimeout(() => {
+                        if (!reconnectSuccess) {
+                            testSource.close();
+                        }
+                    }, 5000);
+                } catch (e) {
+                    console.warn('SSE重连失败，继续轮询');
+                }
+            }
+        }, 30000);
+    }
+
+
+    function getStatusText(status) {
+        const statusMap = {
+            'downloading': '正在下载',
+            'processing': '正在分包',
+            'uploading': '正在上传',
+            'completed': '已完成',
+            'failed': '失败'
+        };
+        return statusMap[status] || '处理中';
+    }
+
+    function getChannelStatusText(status) {
+        if (status === 'success') return '成功';
+        if (status === 'failed') return '失败';
+        if (status === 'processing') return '分包中';
+        if (status === 'uploading') return '上传中';
+        return '等待中';
+    }
+
+    async function submitCheck() {
+        if (!canClick()) {
+            showToast('操作过于频繁，请稍后再试', 'warning');
+            return;
+        }
+        markClick();
+
+        const submitBtn = document.getElementById('submitCheck');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = '检测中...';
+        submitBtn.disabled = true;
+
+        const cdnUrl = document.getElementById('checkCdnUrl').value.trim();
+        const file = document.getElementById('checkFileInput').files[0];
+
+        if (!cdnUrl && !file) {
+            showToast('请提供CDN链接或上传APK文件', 'warning');
+            finishProcessing();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
+
+        const loading = document.getElementById('checkLoading');
+        const result = document.getElementById('checkResult');
+        const content = document.getElementById('checkResultContent');
+
+        loading.classList.add('show');
+        result.classList.remove('show');
+
+        const formData = new FormData();
+        if (cdnUrl) {
+            formData.append('cdnUrl', cdnUrl);
+        }
+        if (file) {
+            formData.append('file', file);
+        }
+
+        try {
+            const response = await fetch('/api/check-channel', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            loading.classList.remove('show');
+
+            if (data.resultCode === '0') {
+                result.className = 'result show success';
+                content.innerHTML = `
+                        <div class="apk-info">
+                            <h4 style="margin-bottom: 15px; color: #333; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px;">应用信息</h4>
+                            <div class="info-row">
+                                <span class="info-label">包名:</span>
+                                <span class="info-value">${data.packageName || ''}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">版本名:</span>
+                                <span class="info-value">${data.versionName || ''}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">版本号:</span>
+                                <span class="info-value">${data.versionCode || 0}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">签名文件MD5:</span>
+                                <span class="info-value">${data.keystoreMd5 || ''}</span>
+                            </div>
+
+                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #333; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px;">SDK版本</h4>
+                            <div class="info-row">
+                                <span class="info-label">minSdkVersion:</span>
+                                <span class="info-value">${data.minSdkVersion || 0}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">targetSdkVersion:</span>
+                                <span class="info-value">${data.targetSdkVersion || 0}</span>
+                            </div>
+
+                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #333; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px;">签名验证</h4>
+                            <div class="info-row">
+                                <span class="info-label">V1签名验证通过:</span>
+                                <span class="info-value ${data.isV1OK ? 'success-text' : 'error-text'}">${data.isV1OK ? 'true' : 'false'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">使用V2签名:</span>
+                                <span class="info-value">${data.useV2Signature ? 'true' : 'false'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">V2签名验证通过:</span>
+                                <span class="info-value ${data.isV2OK ? 'success-text' : 'error-text'}">${data.isV2OK ? 'true' : 'false'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">使用V3签名:</span>
+                                <span class="info-value">${data.useV3Signature ? 'true' : 'false'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">V3签名验证通过:</span>
+                                <span class="info-value ${data.isV3OK ? 'success-text' : 'error-text'}">${data.isV3OK ? 'true' : 'false'}</span>
+                            </div>
+
+                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #333; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px;">签名验证详细信息</h4>
+                            <div class="info-row">
+                                <pre style="background: #f8f9fa; padding: 15px; border-radius: 6px; font-size: 12px; overflow-x: auto; margin: 0;">${data.signatureDetail || ''}</pre>
+                            </div>
+
+                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #333; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px;">渠道号</h4>
+                            <div class="info-row">
+                                <span class="info-label">channelCode:</span>
+                                <span class="info-value channel-code">${data.channelCode || '未检测到渠道号'}</span>
+                            </div>
+                            <button class="copy-btn" style="margin-top: 15px;" onclick="copyToClipboard('${data.channelCode || ''}', this)">复制渠道号</button>
+                        </div>
+                    `;
+            } else {
+                result.className = 'result show error';
+                content.innerHTML = `<div class="check-result error">
+                        <div class="result-title">检测失败</div>
+                        <div class="channel-value">${data.resultMsg}</div>
+                    </div>`;
+            }
+        } catch (error) {
+            loading.classList.remove('show');
+            result.className = 'result show error';
+            content.innerHTML = `<div class="check-result error">
+                    <div class="result-title">请求失败</div>
+                    <div class="channel-value">${error.message}</div>
+                </div>`;
+        } finally {
+            finishProcessing();
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+
+    loadConfig();
+
+    // 绑定按钮点击事件
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitSliceBtn = document.getElementById('submitSlice');
+        const submitCheckBtn = document.getElementById('submitCheck');
+
+        if (submitSliceBtn) {
+            submitSliceBtn.addEventListener('click', submitSlice);
+        }
+
+        if (submitCheckBtn) {
+            submitCheckBtn.addEventListener('click', submitCheck);
+        }
+    });
+</script>
+</body>
+</html>

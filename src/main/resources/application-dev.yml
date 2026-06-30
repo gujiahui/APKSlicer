@@ -1,0 +1,61 @@
+server:
+  port: 8080
+#  servlet:
+#    context-path: /APKSlicer
+
+spring:
+  application:
+    name: APKSlicer
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5GB
+      max-request-size: 5GB
+      file-size-threshold: 10MB
+
+# 七牛云配置（请替换为实际值）
+qiniu:
+  accessKey: YOUR_QINIU_ACCESS_KEY
+  secretKey: YOUR_QINIU_SECRET_KEY
+  bucket: YOUR_QINIU_BUCKET_NAME
+  domain: YOUR_QINIU_CDN_DOMAIN
+
+# 存储配置
+storage:
+  temp-dir: ./temp
+  output-dir: ./output
+
+# 默认渠道号配置
+channels:
+  defaults:
+    - channel_baidu
+    - channel_360
+    - channel_default
+    - channel_sg
+    - channel_baidu2
+    - channel_b
+  options:
+    - channel_sg2
+    - channel_sms
+    - channel_test
+    - channel_test2
+    - channel_test3
+  levels:
+    - "_01"
+    - "_02"
+    - "_03"
+    - "_04"
+    - "_05"
+    - "_06"
+  level-default-channels:
+    - "channel_baidu"
+    - "channel_360"
+    - "channel_default"
+    - "channel_sg"
+# CDN配置（请替换为实际值）
+cdn:
+  domain: YOUR_CDN_DOMAIN
+  path: path
+
+logging:
+  config: classpath:logback.xml
