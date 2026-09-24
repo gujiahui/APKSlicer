@@ -111,11 +111,17 @@ public class SliceSubTask {
                 info.setErrorMessage(errorMsg);
                 progressService.updateChannelProgress(taskId, channel, level, "failed", stepInfo + " 分包失败: " + errorMsg, 100);
             }
-        } catch (Exception e) {
+        } catch (Throwable t) {
+            // 兜底捕获 Throwable（含 Error，如 CoderMalfunctionError），避免任一渠道的异常
+            // 穿透到调度层 future.get() 把整条任务拖垮；单渠道失败应被记录而非中断全部。
             info.setSuccess(false);
-            info.setErrorMessage("处理失败: " + e.getMessage());
-            log.error("Failed to process channel: {}, thread: {}", fullChannelCode, Thread.currentThread().getName(), e);
-            progressService.updateChannelProgress(taskId, channel, level, "failed", stepInfo + " 处理失败: " + e.getMessage(), 100);
+            info.setErrorMessage("处理失败: " + t.getMessage());
+            log.error("Failed to process channel: {}, thread: {}", fullChannelCode, Thread.currentThread().getName(), t);
+            try {
+                progressService.updateChannelProgress(taskId, channel, level, "failed", stepInfo + " 处理失败: " + t.getMessage(), 100);
+            } catch (Throwable ignored) {
+                // 进度上报失败不应再次抛出，避免掩盖原始错误
+            }
         }
 
         return info;

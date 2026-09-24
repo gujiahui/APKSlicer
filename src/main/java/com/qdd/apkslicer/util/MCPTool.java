@@ -407,7 +407,7 @@ public class MCPTool {
      * @throws Exception
      *
      * public static void test() throws Exception { String content = "abc";
-     * String password = "123456789"; System.out.println("content = " +
+     * String password = "YOUR_PASSWORD"; System.out.println("content = " +
      * content); String contentE = new String(encrypt(password,
      * content.getBytes(CHARSET_NAME)), CHARSET_NAME);
      * System.out.println("contentE = " + contentE); String contentD = new

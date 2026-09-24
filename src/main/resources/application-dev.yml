@@ -25,19 +25,19 @@ storage:
   temp-dir: ./temp
   output-dir: ./output
 
-# 默认渠道号配置
+# 默认渠道号配置（请替换为实际值）
 channels:
   defaults:
-    - channel_baidu
-    - channel_360
-    - channel_default
-    - channel_sg
-    - channel_back
+    - channel_example_1
+    - channel_example_2
+    - channel_example_3
+    - channel_example_4
+    - channel_example_5
   options:
-    - channel_sms
-    - channel_test
-    - channel_test2
-    - channel_test3
+    - channel_example_6
+    - channel_example_7
+    - channel_example_8
+    - channel_example_9
   levels:
     - "_01"
     - "_02"
@@ -46,14 +46,14 @@ channels:
     - "_05"
     - "_06"
   level-default-channels:
-    - "channel_baidu"
-    - "channel_360"
-    - "channel_default"
-    - "channel_sg"
+    - "channel_example_1"
+    - "channel_example_2"
+    - "channel_example_3"
+    - "channel_example_4"
 # CDN配置（请替换为实际值）
 cdn:
   domain: YOUR_CDN_DOMAIN
-  path: path
+  path: YOUR_CDN_PATH
 
 logging:
   config: classpath:logback.xml

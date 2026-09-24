@@ -116,3 +116,11 @@ output/
 
 # agents
 .agents/
+
+# JiuwenSwarm runtime file operation logs
+.agent_history/
+# IDE/工具生成的本地报告
+.office-claw/
+.workbuddy/
+/docs
+*.md

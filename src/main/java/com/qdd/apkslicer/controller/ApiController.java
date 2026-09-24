@@ -62,10 +62,10 @@ public class ApiController {
     private final CheckSignatureVersionService signatureVersionService;
     private final ExecutorService sliceExecutor = Executors.newCachedThreadPool();
 
-    @Value("${cdn.domain:}")
+    @Value("${cdn.domain:https://YOUR_CDN_DOMAIN}")
     private String cdnDomain;
 
-    @Value("${cdn.path:/tui}")
+    @Value("${cdn.path:/YOUR_CDN_PATH}")
     private String cdnPath;
 
     public ApiController(DownloadService downloadService, ApkChannelService apkChannelService,
@@ -135,12 +135,12 @@ public class ApiController {
                 }
             }
         } else {
-            selectedChannels.add("channel_baidu");
-            selectedChannels.add("channel_baidu2");
-            selectedChannels.add("channel_b");
-            selectedChannels.add("channel_360");
-            selectedChannels.add("channel_default");
-            selectedChannels.add("channel_sg");
+            selectedChannels.add("channel_example_1");
+            selectedChannels.add("channel_example_2");
+            selectedChannels.add("channel_example_3");
+            selectedChannels.add("channel_example_4");
+            selectedChannels.add("channel_example_5");
+            selectedChannels.add("channel_example_6");
         }
 
         List<String> options = new ArrayList<>();

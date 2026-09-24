@@ -17,6 +17,6 @@ public class ChannelConfig {
     private List<String> options = new ArrayList<>();
     private List<String> levels = new ArrayList<>();
     private List<String> levelDefaultChannels = new ArrayList<>(List.of(
-            "channel_baidu", "channel_360", "channel_default", "channel_sg"
+            "channel_example_1", "channel_example_2", "channel_example_3", "channel_example_4"
     ));
 }

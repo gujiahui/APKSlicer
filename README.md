@@ -46,7 +46,7 @@ qiniu:
 ```yaml
 cdn:
   domain: YOUR_CDN_DOMAIN
-  path: tui
+  path: YOUR_CDN_PATH
 ```
 
 #### 存储配置
@@ -62,16 +62,16 @@ storage:
 ```yaml
 channels:
   defaults:
-    - channel_baidu
-    - channel_360
-    - channel_default
-    - channel_sg
-    - channel_baidu2
-    - channel_b
+    - channel_example_1
+    - channel_example_2
+    - channel_example_3
+    - channel_example_4
+    - channel_example_5
+    - channel_example_6
   options:
-    - channel_sg2
-    - channel_sms
-    - channel_test
+    - channel_example_7
+    - channel_example_8
+    - channel_example_9
   levels:
     - "_01"
     - "_02"
